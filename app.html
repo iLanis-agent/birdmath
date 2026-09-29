@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BirdMath - planner</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #101c14; color: #ecf5ee; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+  main { max-width: 720px; padding: 32px 20px 48px; width: 100%; box-sizing: border-box; }
+  h1 { font-size: 1.9rem; margin: 0 0 4px; }
+  p.sub { color: #a9c9b4; margin: 0 0 20px; }
+  .card { background: #182a1e; border: 1px solid #2a4a35; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; }
+  label { display: block; color: #93b89f; font-size: 0.82rem; margin-bottom: 4px; }
+  input, select { width: 100%; box-sizing: border-box; background: #101c14; border: 1px solid #34593f; color: #ecf5ee; border-radius: 8px; padding: 9px 10px; font-size: 0.95rem; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .presets button { background: #1f3a28; color: #cfe8d8; border: 1px solid #34593f; border-radius: 999px; padding: 7px 14px; font-size: 0.85rem; cursor: pointer; }
+  .presets button:hover { background: #2a4f36; }
+  .out { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .metric { background: #101c14; border: 1px solid #2a4a35; border-radius: 10px; padding: 12px 14px; }
+  .metric .v { font-size: 1.35rem; font-weight: 700; color: #7ad4a1; }
+  .metric .k { color: #93b89f; font-size: 0.78rem; margin-top: 2px; }
+  .note { color: #83a58f; font-size: 0.82rem; line-height: 1.5; margin-top: 10px; }
+  a.back { color: #7ad4a1; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>&#128038; BirdMath</h1>
+  <p class="sub">Backyard bird feeding planner. Count your visitors; get the honest bill.</p>
+  <div class="presets">
+    <button data-p="starter">First feeder</button>
+    <button data-p="busy">Busy yard</button>
+    <button data-p="cheapmix">Cheap-mix trap</button>
+    <button data-p="hummer">Hummingbird summer</button>
+  </div>
+  <div class="card">
+    <div class="grid">
+      <div><label>Distinct visiting birds (seed)</label><input id="birds" type="number" value="12" min="0"></div>
+      <div><label>Mostly what size</label><select id="size"><option value="small">Small (finches, chickadees)</option><option value="medium" selected>Medium (cardinals, sparrows)</option><option value="large">Large (jays, doves)</option></select></div>
+      <div><label>Seed price per lb ($)</label><input id="pricePerLb" type="number" value="1.6" min="0" step="0.1"></div>
+      <div><label>Mix: milo (%)</label><input id="miloPct" type="number" value="0" min="0" max="100"></div>
+      <div><label>Mix: red millet (%)</label><input id="milletPct" type="number" value="5" min="0" max="100"></div>
+      <div><label>Mix: wheat (%)</label><input id="wheatPct" type="number" value="0" min="0" max="100"></div>
+      <div><label>Feeder capacity (oz)</label><input id="capacityOz" type="number" value="48" min="1"></div>
+      <div><label>Yard temp today (F)</label><input id="tempF" type="number" value="65"></div>
+      <div><label>Visiting hummingbirds</label><input id="hummers" type="number" value="3" min="0"></div>
+      <div><label>Nectar batch water (cups)</label><input id="waterCups" type="number" value="4" min="0.5" step="0.5"></div>
+      <div><label>Nectar feeder size (oz)</label><input id="feederOz" type="number" value="12" min="1"></div>
+      <div><label>Suet-eating birds</label><input id="suetBirds" type="number" value="6" min="0"></div>
+    </div>
+  </div>
+  <div class="out">
+    <div class="metric"><div class="v" id="o-draw">-</div><div class="k">Seed per day (oz)</div></div>
+    <div class="metric"><div class="v" id="o-month">-</div><div class="k">Seed per month (lb)</div></div>
+    <div class="metric"><div class="v" id="o-waste">-</div><div class="k">Mix kicked out</div></div>
+    <div class="metric"><div class="v" id="o-honest">-</div><div class="k">Honest $ per eaten lb</div></div>
+    <div class="metric"><div class="v" id="o-cost">-</div><div class="k">Monthly / yearly cost</div></div>
+    <div class="metric"><div class="v" id="o-refill">-</div><div class="k">Days per seed refill</div></div>
+    <div class="metric"><div class="v" id="o-nectar">-</div><div class="k">Nectar batch</div></div>
+    <div class="metric"><div class="v" id="o-suet">-</div><div class="k">Suet cakes per week</div></div>
+  </div>
+  <p class="note" id="o-nwarn"></p>
+  <p class="note">Seed math assumes birds eat what they want - squirrels, platform spill and rain spoilage are extra. Never add dye to nectar; plain 1:4 sugar water is all they need.</p>
+  <p><a class="back" href="index.html">&larr; Back to BirdMath</a></p>
+</main>
+<script src="engine.js"></script>
+<script>
+(function () {
+  var ids = ['birds','size','pricePerLb','miloPct','milletPct','wheatPct','capacityOz','tempF','hummers','waterCups','feederOz','suetBirds'];
+  function num(id) { var v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+  function money(x) { return '$' + x.toFixed(2); }
+  function compute() {
+    if (typeof BirdMath === 'undefined') return;
+    var o = {
+      birds: num('birds'), size: document.getElementById('size').value,
+      pricePerLb: num('pricePerLb'), miloPct: num('miloPct'), milletPct: num('milletPct'), wheatPct: num('wheatPct')
+    };
+    var draw = BirdMath.seedOzPerDay(o.birds, o.size);
+    var mlb = BirdMath.monthlyLb(o.birds, o.size);
+    var waste = BirdMath.mixWastePct(o);
+    var honest = BirdMath.honestCostPerLb(o.pricePerLb, waste);
+    var mcost = BirdMath.monthlyCost(o);
+    var ycost = BirdMath.yearlyCost(o);
+    var refill = BirdMath.refillDays(num('capacityOz'), o.birds, o.size);
+    var nec = BirdMath.nectar(num('waterCups'));
+    var safe = BirdMath.nectarSafeDays(num('tempF'));
+    var ndays = BirdMath.nectarDays(num('feederOz'), num('hummers'));
+    var suet = BirdMath.suetPerWeek(num('suetBirds'), num('tempF'));
+    document.getElementById('o-draw').textContent = draw + ' oz';
+    document.getElementById('o-month').textContent = mlb + ' lb';
+    document.getElementById('o-waste').textContent = waste + '%';
+    document.getElementById('o-honest').textContent = isFinite(honest) ? money(honest) : 'n/a';
+    document.getElementById('o-cost').textContent = money(mcost) + ' / ' + money(ycost);
+    document.getElementById('o-refill').textContent = refill + ' days';
+    document.getElementById('o-nectar').textContent = nec.sugarCups + ' c sugar / ' + nec.totalOz + ' oz';
+    document.getElementById('o-suet').textContent = suet + ' cakes';
+    document.getElementById('o-nwarn').textContent =
+      'At ' + num('tempF') + 'F nectar stays safe about ' + safe + ' day' + (safe === 1 ? '' : 's') +
+      ', but ' + num('hummers') + ' hummingbirds finish a ' + num('feederOz') + ' oz feeder in ~' + ndays +
+      ' days. Fill only what they drink before it ferments.';
+  }
+  var presets = {
+    starter: {birds:6, size:'small', pricePerLb:2.2, miloPct:0, milletPct:0, wheatPct:0, capacityOz:32, tempF:65, hummers:2, waterCups:2, feederOz:8, suetBirds:3},
+    busy: {birds:25, size:'medium', pricePerLb:1.6, miloPct:0, milletPct:5, wheatPct:0, capacityOz:64, tempF:45, hummers:0, waterCups:4, feederOz:12, suetBirds:10},
+    cheapmix: {birds:12, size:'medium', pricePerLb:1.1, miloPct:35, milletPct:25, wheatPct:10, capacityOz:48, tempF:65, hummers:3, waterCups:4, feederOz:12, suetBirds:6},
+    hummer: {birds:4, size:'small', pricePerLb:2.2, miloPct:0, milletPct:0, wheatPct:0, capacityOz:32, tempF:92, hummers:8, waterCups:2, feederOz:10, suetBirds:2}
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.presets button'), function (b) {
+    b.addEventListener('click', function () {
+      var p = presets[b.getAttribute('data-p')];
+      if (!p) return;
+      Object.keys(p).forEach(function (k) { document.getElementById(k).value = p[k]; });
+      compute();
+    });
+  });
+  ids.forEach(function (id) {
+    document.getElementById(id).addEventListener('input', compute);
+    document.getElementById(id).addEventListener('change', compute);
+  });
+  compute();
+})();
+</script>
+</body>
+</html>
